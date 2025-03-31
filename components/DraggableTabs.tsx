@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Tabs, Dropdown, Button } from 'antd';
-import type { TabsProps } from 'antd';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   DndContext,
@@ -21,7 +19,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Pin as PushPin, MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
 
 interface DraggableTabPaneProps extends React.HTMLAttributes<HTMLDivElement> {
   'data-node-key': string;
@@ -43,13 +41,13 @@ const DraggableTabNode = ({ className, ...props }: DraggableTabPaneProps) => {
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
-      {...listeners} 
-      {...props} 
-      className={`${className} ${isDragging ? 'shadow-lg rounded-md bg-white' : ''}`}
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      {...props}
+      className={`${className ? className : ''} ${isDragging ? 'shadow-lg rounded-md bg-white' : ''}`}
     />
   );
 };
@@ -62,7 +60,7 @@ interface TabItem {
   pinned?: boolean;
 }
 
-export default function DraggableTabs() {
+export default function DraggableTabsNoAnt() {
   const [items, setItems] = useState<TabItem[]>([
     { key: '1', label: 'Tab 1', url: '/tab1', children: 'Content of Tab 1' },
     { key: '2', label: 'Tab 2', url: '/tab2', children: 'Content of Tab 2' },
@@ -74,26 +72,19 @@ export default function DraggableTabs() {
   const [activeKey, setActiveKey] = useState(items[0].key);
   const [overflowItems, setOverflowItems] = useState<TabItem[]>([]);
   const [draggedItem, setDraggedItem] = useState<TabItem | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
   const tabsRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
 
   const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: {
-        distance: 10,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 250,
-        tolerance: 5,
-      },
-    })
+    useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
 
   useEffect(() => {
-    // Load saved tab order from localStorage
+    // Завантаження збереженого порядку вкладок з localStorage
     const savedItems = localStorage.getItem('tabOrder');
     if (savedItems) {
       setItems(JSON.parse(savedItems));
@@ -101,12 +92,12 @@ export default function DraggableTabs() {
   }, []);
 
   useEffect(() => {
-    // Save tab order to localStorage whenever it changes
+    // Збереження порядку вкладок при його зміні
     localStorage.setItem('tabOrder', JSON.stringify(items));
   }, [items]);
 
   useEffect(() => {
-    // Set active key based on current pathname
+    // Встановлення активної вкладки згідно з поточним шляхом
     const currentTab = items.find(item => item.url === pathname);
     if (currentTab) {
       setActiveKey(currentTab.key);
@@ -114,30 +105,30 @@ export default function DraggableTabs() {
   }, [pathname, items]);
 
   useEffect(() => {
-    // Handle window resize and calculate overflow
+    // Розрахунок переповнення вкладок при зміні розміру вікна
     const handleResize = () => {
       if (!tabsRef.current) return;
-
-      const tabsContainer = tabsRef.current;
-      const tabsList = tabsContainer.querySelector('.ant-tabs-nav-list');
-      const tabsWidth = tabsContainer.offsetWidth;
+      const container = tabsRef.current;
+      // Шукаємо всі елементи вкладок за класом 'tab-item'
+      const tabElements = container.querySelectorAll('.tab-item');
+      const containerWidth = container.offsetWidth;
       let totalWidth = 0;
-      const visibleItems: TabItem[] = [];
+      const visible: TabItem[] = [];
       const overflow: TabItem[] = [];
 
       items.forEach((item, index) => {
-        const tab = tabsList?.children[index] as HTMLElement;
-        if (tab) {
-          const tabWidth = tab.offsetWidth;
-          if (totalWidth + tabWidth <= tabsWidth || item.pinned) {
+        const tabEl = tabElements[index] as HTMLElement;
+        if (tabEl) {
+          const tabWidth = tabEl.offsetWidth;
+          // Якщо вкладка закріплена або загальна ширина дозволяє розмістити вкладку
+          if (totalWidth + tabWidth <= containerWidth || item.pinned) {
             totalWidth += tabWidth;
-            visibleItems.push(item);
+            visible.push(item);
           } else {
             overflow.push(item);
           }
         }
       });
-
       setOverflowItems(overflow);
     };
 
@@ -149,17 +140,17 @@ export default function DraggableTabs() {
 
   const onDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    const draggedTab = items.find(item => item.key === active.id);
-    if (draggedTab) {
-      setDraggedItem(draggedTab);
+    const dragged = items.find(item => item.key === active.id);
+    if (dragged) {
+      setDraggedItem(dragged);
     }
   };
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     setDraggedItem(null);
     if (active.id !== over?.id) {
-      const activeIndex = items.findIndex((item) => item.key === active.id);
-      const overIndex = items.findIndex((item) => item.key === over?.id);
+      const activeIndex = items.findIndex(item => item.key === active.id);
+      const overIndex = items.findIndex(item => item.key === over?.id);
       const newItems = arrayMove(items, activeIndex, overIndex);
       setItems(newItems);
     }
@@ -167,87 +158,124 @@ export default function DraggableTabs() {
 
   const onChange = (key: string) => {
     setActiveKey(key);
-    const tab = items.find((item) => item.key === key);
+    const tab = items.find(item => item.key === key);
     if (tab) {
       router.push(tab.url);
     }
   };
 
   const togglePin = (key: string) => {
-    setItems(items.map(item => 
+    setItems(items.map(item =>
       item.key === key ? { ...item, pinned: !item.pinned } : item
     ));
   };
 
-  const targetOffset = [0, -4];
-
-  const renderTabBar: TabsProps['renderTabBar'] = (tabBarProps, DefaultTabBar) => (
-    <DndContext 
-      sensors={sensors} 
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-    >
-      <SortableContext items={items.map(i => i.key)} strategy={horizontalListSortingStrategy}>
-        <DefaultTabBar {...tabBarProps}>
-          {(node) => (
-            <DraggableTabNode {...node.props} data-node-key={node.key}>
-              <div className="flex items-center gap-2">
-                {node.props.children}
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<PushPin className={`h-4 w-4 ${items.find(i => i.key === node.key)?.pinned ? 'text-blue-500' : ''}`} />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    togglePin(node.key as string);
-                  }}
-                />
-              </div>
-            </DraggableTabNode>
-          )}
-        </DefaultTabBar>
-      </SortableContext>
-      <DragOverlay>
-        {draggedItem ? (
-          <div className="bg-white shadow-xl rounded-md p-2 border border-blue-500">
-            {draggedItem.label}
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
-  );
-
   return (
-    <div ref={tabsRef} className="relative">
-      <div className="flex items-center">
-        <Tabs
-          type="card"
-          activeKey={activeKey}
-          onChange={onChange}
-          renderTabBar={renderTabBar}
-          items={items.filter(item => !overflowItems.includes(item))}
-          className="flex-grow"
-        />
-        {overflowItems.length > 0 && (
-          <Dropdown
-            menu={{
-              items: overflowItems.map(item => ({
-                key: item.key,
-                label: item.label,
-                onClick: () => onChange(item.key),
-              })),
+    <div ref={tabsRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+      <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
+        <SortableContext items={items.map(i => i.key)} strategy={horizontalListSortingStrategy}>
+          <ul style={{ display: 'flex', listStyle: 'none', margin: 0, padding: 0, flexGrow: 1 }}>
+            {items.filter(item => !overflowItems.includes(item)).map(item => (
+              <DraggableTabNode key={item.key} data-node-key={item.key}>
+                <li
+                  className="tab-item"
+                  onClick={() => onChange(item.key)}
+                  style={{
+                    padding: '8px 16px',
+                    border: activeKey === item.key ? '2px solid blue' : '1px solid gray',
+                    borderRadius: '4px',
+                    marginRight: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: activeKey === item.key ? '#e6f7ff' : '#fff',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span>{item.label}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      togglePin(item.key);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      marginLeft: '8px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {/* <PushPin className={`h-4 w-4 ${item.pinned ? 'text-blue-500' : ''}`} /> */}
+                  </button>
+                </li>
+              </DraggableTabNode>
+            ))}
+          </ul>
+        </SortableContext>
+        <DragOverlay>
+          {draggedItem ? (
+            <div
+              style={{
+                background: '#fff',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                borderRadius: '4px',
+                padding: '8px 16px',
+                border: '1px solid blue',
+              }}
+            >
+              {draggedItem.label}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+      {overflowItems.length > 0 && (
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            style={{
+              background: 'none',
+              border: '1px solid gray',
+              borderRadius: '4px',
+              padding: '4px 8px',
+              cursor: 'pointer',
             }}
-            placement="bottomRight"
-            trigger={['click']}
           >
-            <Button
-              type="text"
-              icon={<MoreHorizontal className="h-5 w-5" />}
-              className="ml-2"
-            />
-          </Dropdown>
-        )}
-      </div>
+            <MoreHorizontal className="h-5 w-5" />
+          </button>
+          {dropdownOpen && (
+            <ul
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                background: '#fff',
+                border: '1px solid gray',
+                borderRadius: '4px',
+                listStyle: 'none',
+                padding: '4px 0',
+                margin: 0,
+                zIndex: 1000,
+              }}
+            >
+              {overflowItems.map(item => (
+                <li
+                  key={item.key}
+                  onClick={() => {
+                    onChange(item.key);
+                    setDropdownOpen(false);
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {item.label}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
