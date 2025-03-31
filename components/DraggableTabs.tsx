@@ -35,6 +35,7 @@ import {
   Box,
   List,
   ShoppingCart,
+  MapIcon,
 } from 'lucide-react';
 
 interface DraggableTabPaneProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -151,25 +152,25 @@ export default function DraggableTabsNoAnt() {
     if (!tabsRef.current) return;
     const container = tabsRef.current;
     const DROPDOWN_BUTTON_WIDTH = 40;
-  
+
     const handleResize = () => {
       const containerWidth = container.offsetWidth;
       const tabElements = Array.from(container.querySelectorAll('.tab-item')) as HTMLElement[];
-  
+
       let totalAllTabsWidth = 0;
       tabElements.forEach(tabEl => {
         totalAllTabsWidth += tabEl.offsetWidth;
       });
-  
+
       let availableWidth = containerWidth;
       if (totalAllTabsWidth > containerWidth) {
         availableWidth = containerWidth - DROPDOWN_BUTTON_WIDTH;
       }
-  
+
       let cumulativeWidth = 0;
       const visible: TabItem[] = [];
       const overflow: TabItem[] = [];
-  
+
       items.forEach((item, index) => {
         const tabEl = tabElements[index];
         if (tabEl) {
@@ -184,12 +185,12 @@ export default function DraggableTabsNoAnt() {
       });
       setOverflowItems(overflow);
     };
-  
+
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, [items]);
-  
+
 
   const onDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -223,7 +224,7 @@ export default function DraggableTabsNoAnt() {
     setItems(items.map(item =>
       item.key === key ? { ...item, pinned: !item.pinned } : item
     ));
-    
+
     window.dispatchEvent(new Event('resize'));
   };
 
@@ -322,8 +323,12 @@ export default function DraggableTabsNoAnt() {
                 background: '#7F858D',
                 padding: '8px 16px',
                 color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
               }}
             >
+              {draggedItem.icon && iconMap[draggedItem.icon] ? React.createElement(iconMap[draggedItem.icon]) : null}
               {draggedItem.label}
             </div>
           ) : null}
