@@ -371,8 +371,12 @@ export default function DraggableTabsNoAnt() {
                     padding: '8px 16px',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
                   }}
                 >
+                  {item.icon && iconMap[item.icon] ? React.createElement(iconMap[item.icon]) : null}
                   {item.label}
                 </li>
               ))}
