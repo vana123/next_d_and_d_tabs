@@ -148,46 +148,58 @@ export default function DraggableTabsNoAnt() {
   }, [pathname, items]);
 
   useEffect(() => {
-    const DROPDOWN_BUTTON_WIDTH = 40; // Ширина кнопки випадаючого списку
+    if (!tabsRef.current) return;
+    const container = tabsRef.current;
+    const DROPDOWN_BUTTON_WIDTH = 50; // Ширина кнопки випадаючого списку
+  
     const handleResize = () => {
-      if (!tabsRef.current) return;
-      const container = tabsRef.current;
       const containerWidth = container.offsetWidth;
-      const tabElements = container.querySelectorAll('.tab-item');
-      
-      // Обрахуємо загальну ширину всіх табів
+      const tabElements = Array.from(container.querySelectorAll('.tab-item')) as HTMLElement[];
+  
+      // Обчислюємо загальну ширину всіх табів
       let totalAllTabsWidth = 0;
-      tabElements.forEach((tabEl) => {
-        totalAllTabsWidth += (tabEl as HTMLElement).offsetWidth;
+      tabElements.forEach(tabEl => {
+        totalAllTabsWidth += tabEl.offsetWidth;
       });
-      
-      // Якщо всі таби вміщаються, не потрібно резервувати місце під dropdown
-      const availableWidth = totalAllTabsWidth > containerWidth ? containerWidth - DROPDOWN_BUTTON_WIDTH : containerWidth;
-      
-      let totalWidth = 0;
+  
+      // Якщо загальна ширина перевищує ширину контейнера, відводимо місце під кнопку випадаючого списку
+      let availableWidth = containerWidth;
+      if (totalAllTabsWidth > containerWidth) {
+        availableWidth = containerWidth - DROPDOWN_BUTTON_WIDTH;
+      }
+  
+      let cumulativeWidth = 0;
       const visible: TabItem[] = [];
       const overflow: TabItem[] = [];
-      
+  
+      // Ітеруємо по табам відповідно до їхнього порядку (припускаємо, що порядок items відповідає DOM-елементам)
       items.forEach((item, index) => {
-        const tabEl = tabElements[index] as HTMLElement;
+        const tabEl = tabElements[index];
         if (tabEl) {
           const tabWidth = tabEl.offsetWidth;
-          // Якщо вкладка закріплена або вкладка вміщається в доступну ширину
-          if (totalWidth + tabWidth <= availableWidth || item.pinned) {
-            totalWidth += tabWidth;
+          // Якщо додавання цього табу не перевищує доступну ширину – додаємо до видимих
+          if (cumulativeWidth + tabWidth <= availableWidth) {
+            cumulativeWidth += tabWidth;
             visible.push(item);
           } else {
+            // Інакше таб потрапляє в переповнення
             overflow.push(item);
           }
         }
       });
+  
+      // Оновлюємо стан переповнення, щоб у рендері використовувати overflowItems
       setOverflowItems(overflow);
+  
+      console.log('Visible tabs:', visible.map(item => item.label));
+      console.log('Overflow tabs:', overflow.map(item => item.label));
     };
-
+  
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, [items]);
+  
 
   const onDragStart = (event: DragStartEvent) => {
     const { active } = event;
