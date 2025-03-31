@@ -150,19 +150,17 @@ export default function DraggableTabsNoAnt() {
   useEffect(() => {
     if (!tabsRef.current) return;
     const container = tabsRef.current;
-    const DROPDOWN_BUTTON_WIDTH = 50; // Ширина кнопки випадаючого списку
+    const DROPDOWN_BUTTON_WIDTH = 40;
   
     const handleResize = () => {
       const containerWidth = container.offsetWidth;
       const tabElements = Array.from(container.querySelectorAll('.tab-item')) as HTMLElement[];
   
-      // Обчислюємо загальну ширину всіх табів
       let totalAllTabsWidth = 0;
       tabElements.forEach(tabEl => {
         totalAllTabsWidth += tabEl.offsetWidth;
       });
   
-      // Якщо загальна ширина перевищує ширину контейнера, відводимо місце під кнопку випадаючого списку
       let availableWidth = containerWidth;
       if (totalAllTabsWidth > containerWidth) {
         availableWidth = containerWidth - DROPDOWN_BUTTON_WIDTH;
@@ -172,27 +170,19 @@ export default function DraggableTabsNoAnt() {
       const visible: TabItem[] = [];
       const overflow: TabItem[] = [];
   
-      // Ітеруємо по табам відповідно до їхнього порядку (припускаємо, що порядок items відповідає DOM-елементам)
       items.forEach((item, index) => {
         const tabEl = tabElements[index];
         if (tabEl) {
           const tabWidth = tabEl.offsetWidth;
-          // Якщо додавання цього табу не перевищує доступну ширину – додаємо до видимих
           if (cumulativeWidth + tabWidth <= availableWidth) {
             cumulativeWidth += tabWidth;
             visible.push(item);
           } else {
-            // Інакше таб потрапляє в переповнення
             overflow.push(item);
           }
         }
       });
-  
-      // Оновлюємо стан переповнення, щоб у рендері використовувати overflowItems
       setOverflowItems(overflow);
-  
-      console.log('Visible tabs:', visible.map(item => item.label));
-      console.log('Overflow tabs:', overflow.map(item => item.label));
     };
   
     window.addEventListener('resize', handleResize);
@@ -217,6 +207,8 @@ export default function DraggableTabsNoAnt() {
       const newItems = arrayMove(items, activeIndex, overIndex);
       setItems(newItems);
     }
+
+    window.dispatchEvent(new Event('resize'));
   };
 
   const onChange = (key: string) => {
@@ -231,6 +223,8 @@ export default function DraggableTabsNoAnt() {
     setItems(items.map(item =>
       item.key === key ? { ...item, pinned: !item.pinned } : item
     ));
+    
+    window.dispatchEvent(new Event('resize'));
   };
 
   return (
@@ -279,7 +273,7 @@ export default function DraggableTabsNoAnt() {
                           position: 'absolute',
                           top: '100%',
                           left: '10px',
-                          marginTop: '1px',
+                          marginTop: 0,
                           padding: '6px 16px',
                           background: '#FEFEFE',
                           border: '1px solid #e2e8f0',
