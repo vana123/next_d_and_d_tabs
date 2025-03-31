@@ -19,7 +19,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { MoreHorizontal } from 'lucide-react';
+import { Pin, ChevronDown , Star, } from 'lucide-react';
 
 interface DraggableTabPaneProps extends React.HTMLAttributes<HTMLDivElement> {
   'data-node-key': string;
@@ -58,15 +58,24 @@ interface TabItem {
   url: string;
   children: React.ReactNode;
   pinned?: boolean;
+  icon?: string;
 }
 
 export default function DraggableTabsNoAnt() {
   const [items, setItems] = useState<TabItem[]>([
-    { key: '1', label: 'Tab 1', url: '/tab1', children: 'Content of Tab 1' },
-    { key: '2', label: 'Tab 2', url: '/tab2', children: 'Content of Tab 2' },
-    { key: '3', label: 'Tab 3', url: '/tab3', children: 'Content of Tab 3' },
-    { key: '4', label: 'Tab 4', url: '/tab4', children: 'Content of Tab 4' },
-    { key: '5', label: 'Tab 5', url: '/tab5', children: 'Content of Tab 5' },
+    { key: '1', label: 'Dashboard', url: '/Dashboard', children: 'Content of Tab 1', icon: 'star' },
+    { key: '2', label: 'Banking', url: '/Banking', children: 'Content of Tab 2', icon: 'star' },
+    { key: '3', label: 'Telefonie', url: '/Telefonie', children: 'Content of Tab 3', icon: 'star' },
+    { key: '4', label: 'Accounting', url: '/Accounting', children: 'Content of Tab 4', icon: 'star' },
+    { key: '5', label: 'Verkauf', url: '/Verkauf', children: 'Content of Tab 5', icon: 'star' },
+    { key: '6', label: 'Statistik', url: '/Statistik', children: 'Content of Tab 5', icon: 'star' },
+    { key: '7', label: 'Post Office', url: '/Post_Office', children: 'Content of Tab 5', icon: 'star' },
+    { key: '8', label: 'Administration', url: '/Administration', children: 'Content of Tab 5', icon: 'star' },
+    { key: '9', label: 'Help', url: '/Help', children: 'Content of Tab 5', icon: 'star' },
+    { key: '10', label: 'Warenbestand', url: '/Warenbestand', children: 'Content of Tab 5', icon: 'star' },
+    { key: '11', label: 'Auswahllisten', url: '/Auswahllisten', children: 'Content of Tab 5', icon: 'star' },
+    { key: '12', label: 'Einkauf', url: '/Einkauf', children: 'Content of Tab 5', icon: 'star' },
+    { key: '13', label: 'Rechn', url: '/Rechn', children: 'Content of Tab 5', icon: 'star' },
   ]);
 
   const [activeKey, setActiveKey] = useState(items[0].key);
@@ -84,7 +93,6 @@ export default function DraggableTabsNoAnt() {
   );
 
   useEffect(() => {
-    // Завантаження збереженого порядку вкладок з localStorage
     const savedItems = localStorage.getItem('tabOrder');
     if (savedItems) {
       setItems(JSON.parse(savedItems));
@@ -92,12 +100,10 @@ export default function DraggableTabsNoAnt() {
   }, []);
 
   useEffect(() => {
-    // Збереження порядку вкладок при його зміні
     localStorage.setItem('tabOrder', JSON.stringify(items));
   }, [items]);
 
   useEffect(() => {
-    // Встановлення активної вкладки згідно з поточним шляхом
     const currentTab = items.find(item => item.url === pathname);
     if (currentTab) {
       setActiveKey(currentTab.key);
@@ -109,7 +115,6 @@ export default function DraggableTabsNoAnt() {
     const handleResize = () => {
       if (!tabsRef.current) return;
       const container = tabsRef.current;
-      // Шукаємо всі елементи вкладок за класом 'tab-item'
       const tabElements = container.querySelectorAll('.tab-item');
       const containerWidth = container.offsetWidth;
       let totalWidth = 0;
@@ -120,7 +125,6 @@ export default function DraggableTabsNoAnt() {
         const tabEl = tabElements[index] as HTMLElement;
         if (tabEl) {
           const tabWidth = tabEl.offsetWidth;
-          // Якщо вкладка закріплена або загальна ширина дозволяє розмістити вкладку
           if (totalWidth + tabWidth <= containerWidth || item.pinned) {
             totalWidth += tabWidth;
             visible.push(item);
@@ -182,17 +186,17 @@ export default function DraggableTabsNoAnt() {
                   onClick={() => onChange(item.key)}
                   style={{
                     padding: '8px 16px',
-                    border: activeKey === item.key ? '2px solid blue' : '1px solid gray',
-                    borderRadius: '4px',
-                    marginRight: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    background: activeKey === item.key ? '#e6f7ff' : '#fff',
+                    color: activeKey === item.key ? '#343434' : '#7F858D',
+                    background: activeKey === item.key ? '#F1F5F8' : '#FEFEFE',
                     cursor: 'pointer',
+                    borderTop: activeKey === item.key ? '2px solid #0070f3' : 'none',
                   }}
                 >
-                  <span>{item.label}</span>
-                  <button
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                    {item.icon === 'star' && <Star  color={activeKey === item.key ? '#343434' : '#7F858D'} />}
+                    {item.label}
+                  </span>
+                  {/* <button
                     onClick={(e) => {
                       e.stopPropagation();
                       togglePin(item.key);
@@ -204,8 +208,8 @@ export default function DraggableTabsNoAnt() {
                       cursor: 'pointer',
                     }}
                   >
-                    {/* <PushPin className={`h-4 w-4 ${item.pinned ? 'text-blue-500' : ''}`} /> */}
-                  </button>
+                    <Pin className={`h-4 w-4 ${item.pinned ? 'text-blue-500' : ''}`} />
+                  </button> */}
                 </li>
               </DraggableTabNode>
             ))}
@@ -215,11 +219,9 @@ export default function DraggableTabsNoAnt() {
           {draggedItem ? (
             <div
               style={{
-                background: '#fff',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                borderRadius: '4px',
+                background: '#7F858D',
                 padding: '8px 16px',
-                border: '1px solid blue',
+                color: '#FFFFFF',
               }}
             >
               {draggedItem.label}
@@ -232,14 +234,12 @@ export default function DraggableTabsNoAnt() {
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
             style={{
-              background: 'none',
-              border: '1px solid gray',
-              borderRadius: '4px',
-              padding: '4px 8px',
+              background: '#F1F5F8',
               cursor: 'pointer',
+              border: 'none',
             }}
           >
-            <MoreHorizontal className="h-5 w-5" />
+            <ChevronDown color='#7F858D' className="h-5 w-5" />
           </button>
           {dropdownOpen && (
             <ul
@@ -247,8 +247,7 @@ export default function DraggableTabsNoAnt() {
                 position: 'absolute',
                 top: '100%',
                 right: 0,
-                background: '#fff',
-                border: '1px solid gray',
+                background: '#FEFEFE',
                 borderRadius: '4px',
                 listStyle: 'none',
                 padding: '4px 0',
