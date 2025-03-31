@@ -19,22 +19,41 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Pin, ChevronDown , Star, } from 'lucide-react';
+import {
+  Pin,
+  ChevronDown,
+  Star,
+  Landmark,
+  LayoutDashboard,
+  Headset,
+  UserRoundPlus,
+  Store,
+  ChartPie,
+  StickyNote,
+  Settings,
+  BookOpen,
+  Box,
+  List,
+  ShoppingCart,
+} from 'lucide-react';
 
 interface DraggableTabPaneProps extends React.HTMLAttributes<HTMLDivElement> {
   'data-node-key': string;
+  disabled?: boolean;
 }
 
-const DraggableTabNode = ({ className, ...props }: DraggableTabPaneProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: props['data-node-key'],
-  });
+const DraggableTabNode = ({ className, disabled, ...props }: DraggableTabPaneProps) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({
+      id: props['data-node-key'],
+      disabled: disabled,
+    });
 
   const style: React.CSSProperties = {
     ...props.style,
     transform: CSS.Transform.toString(transform),
     transition,
-    cursor: 'move',
+    cursor: disabled ? 'default' : 'move',
     opacity: isDragging ? 0 : 1,
     position: 'relative',
     zIndex: isDragging ? 1 : 0,
@@ -45,7 +64,7 @@ const DraggableTabNode = ({ className, ...props }: DraggableTabPaneProps) => {
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
+      {...(disabled ? {} : listeners)}
       {...props}
       className={`${className ? className : ''} ${isDragging ? 'shadow-lg rounded-md bg-white' : ''}`}
     />
@@ -61,27 +80,45 @@ interface TabItem {
   icon?: string;
 }
 
+// Мапінг іконок для спрощеного рендерингу
+const iconMap: { [key: string]: React.ComponentType<{ color?: string; className?: string }> } = {
+  star: Star,
+  Landmark: Landmark,
+  LayoutDashboard: LayoutDashboard,
+  Headset: Headset,
+  UserRoundPlus: UserRoundPlus,
+  Store: Store,
+  ChartPie: ChartPie,
+  StickyNote: StickyNote,
+  Settings: Settings,
+  BookOpen: BookOpen,
+  Box: Box,
+  List: List,
+  ShoppingCart: ShoppingCart,
+};
+
 export default function DraggableTabsNoAnt() {
   const [items, setItems] = useState<TabItem[]>([
-    { key: '1', label: 'Dashboard', url: '/Dashboard', children: 'Content of Tab 1', icon: 'star' },
-    { key: '2', label: 'Banking', url: '/Banking', children: 'Content of Tab 2', icon: 'star' },
-    { key: '3', label: 'Telefonie', url: '/Telefonie', children: 'Content of Tab 3', icon: 'star' },
-    { key: '4', label: 'Accounting', url: '/Accounting', children: 'Content of Tab 4', icon: 'star' },
-    { key: '5', label: 'Verkauf', url: '/Verkauf', children: 'Content of Tab 5', icon: 'star' },
-    { key: '6', label: 'Statistik', url: '/Statistik', children: 'Content of Tab 5', icon: 'star' },
-    { key: '7', label: 'Post Office', url: '/Post_Office', children: 'Content of Tab 5', icon: 'star' },
-    { key: '8', label: 'Administration', url: '/Administration', children: 'Content of Tab 5', icon: 'star' },
-    { key: '9', label: 'Help', url: '/Help', children: 'Content of Tab 5', icon: 'star' },
-    { key: '10', label: 'Warenbestand', url: '/Warenbestand', children: 'Content of Tab 5', icon: 'star' },
-    { key: '11', label: 'Auswahllisten', url: '/Auswahllisten', children: 'Content of Tab 5', icon: 'star' },
-    { key: '12', label: 'Einkauf', url: '/Einkauf', children: 'Content of Tab 5', icon: 'star' },
-    { key: '13', label: 'Rechn', url: '/Rechn', children: 'Content of Tab 5', icon: 'star' },
+    { key: '1', label: 'Dashboard', url: '/Dashboard', children: 'Content of Tab 1', icon: 'LayoutDashboard' },
+    { key: '2', label: 'Banking', url: '/Banking', children: 'Content of Tab 2', icon: 'Landmark' },
+    { key: '3', label: 'Telefonie', url: '/Telefonie', children: 'Content of Tab 3', icon: 'Headset' },
+    { key: '4', label: 'Accounting', url: '/Accounting', children: 'Content of Tab 4', icon: 'UserRoundPlus' },
+    { key: '5', label: 'Verkauf', url: '/Verkauf', children: 'Content of Tab 5', icon: 'Store' },
+    { key: '6', label: 'Statistik', url: '/Statistik', children: 'Content of Tab 6', icon: 'ChartPie' },
+    { key: '7', label: 'Post Office', url: '/Post_Office', children: 'Content of Tab 7', icon: 'StickyNote', pinned: true },
+    { key: '8', label: 'Administration', url: '/Administration', children: 'Content of Tab 8', icon: 'Settings' },
+    { key: '9', label: 'Help', url: '/Help', children: 'Content of Tab 9', icon: 'BookOpen' },
+    { key: '10', label: 'Warenbestand', url: '/Warenbestand', children: 'Content of Tab 10', icon: 'Box' },
+    { key: '11', label: 'Auswahllisten', url: '/Auswahllisten', children: 'Content of Tab 11', icon: 'List' },
+    { key: '12', label: 'Einkauf', url: '/Einkauf', children: 'Content of Tab 12', icon: 'ShoppingCart' },
+    { key: '13', label: 'Rechn', url: '/Rechn', children: 'Content of Tab 13', icon: 'star' },
   ]);
 
   const [activeKey, setActiveKey] = useState(items[0].key);
   const [overflowItems, setOverflowItems] = useState<TabItem[]>([]);
   const [draggedItem, setDraggedItem] = useState<TabItem | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
 
   const tabsRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -111,21 +148,32 @@ export default function DraggableTabsNoAnt() {
   }, [pathname, items]);
 
   useEffect(() => {
-    // Розрахунок переповнення вкладок при зміні розміру вікна
+    const DROPDOWN_BUTTON_WIDTH = 40; // Ширина кнопки випадаючого списку
     const handleResize = () => {
       if (!tabsRef.current) return;
       const container = tabsRef.current;
-      const tabElements = container.querySelectorAll('.tab-item');
       const containerWidth = container.offsetWidth;
+      const tabElements = container.querySelectorAll('.tab-item');
+      
+      // Обрахуємо загальну ширину всіх табів
+      let totalAllTabsWidth = 0;
+      tabElements.forEach((tabEl) => {
+        totalAllTabsWidth += (tabEl as HTMLElement).offsetWidth;
+      });
+      
+      // Якщо всі таби вміщаються, не потрібно резервувати місце під dropdown
+      const availableWidth = totalAllTabsWidth > containerWidth ? containerWidth - DROPDOWN_BUTTON_WIDTH : containerWidth;
+      
       let totalWidth = 0;
       const visible: TabItem[] = [];
       const overflow: TabItem[] = [];
-
+      
       items.forEach((item, index) => {
         const tabEl = tabElements[index] as HTMLElement;
         if (tabEl) {
           const tabWidth = tabEl.offsetWidth;
-          if (totalWidth + tabWidth <= containerWidth || item.pinned) {
+          // Якщо вкладка закріплена або вкладка вміщається в доступну ширину
+          if (totalWidth + tabWidth <= availableWidth || item.pinned) {
             totalWidth += tabWidth;
             visible.push(item);
           } else {
@@ -138,7 +186,6 @@ export default function DraggableTabsNoAnt() {
 
     window.addEventListener('resize', handleResize);
     handleResize();
-
     return () => window.removeEventListener('resize', handleResize);
   }, [items]);
 
@@ -179,40 +226,87 @@ export default function DraggableTabsNoAnt() {
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <SortableContext items={items.map(i => i.key)} strategy={horizontalListSortingStrategy}>
           <ul style={{ display: 'flex', listStyle: 'none', margin: 0, padding: 0, flexGrow: 1 }}>
-            {items.filter(item => !overflowItems.includes(item)).map(item => (
-              <DraggableTabNode key={item.key} data-node-key={item.key}>
-                <li
-                  className="tab-item"
-                  onClick={() => onChange(item.key)}
-                  style={{
-                    padding: '8px 16px',
-                    color: activeKey === item.key ? '#343434' : '#7F858D',
-                    background: activeKey === item.key ? '#F1F5F8' : '#FEFEFE',
-                    cursor: 'pointer',
-                    borderTop: activeKey === item.key ? '2px solid #0070f3' : 'none',
-                  }}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                    {item.icon === 'star' && <Star  color={activeKey === item.key ? '#343434' : '#7F858D'} />}
-                    {item.label}
-                  </span>
-                  {/* <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      togglePin(item.key);
-                    }}
+            {items.filter(item => !overflowItems.includes(item)).map(item => {
+              const IconComponent = item.icon ? iconMap[item.icon] : null;
+              return (
+                <DraggableTabNode key={item.key} data-node-key={item.key} disabled={!!item.pinned}>
+                  <li
+                    className="tab-item"
+                    onClick={() => onChange(item.key)}
+                    onMouseEnter={() => setHoveredTab(item.key)}
+                    onMouseLeave={() => setHoveredTab(null)}
                     style={{
-                      background: 'none',
-                      border: 'none',
-                      marginLeft: '8px',
-                      cursor: 'pointer',
+                      padding: '8px 16px',
+                      color: activeKey === item.key ? '#343434' : '#7F858D',
+                      background: activeKey === item.key ? '#F1F5F8' : '#FEFEFE',
+                      cursor: item.pinned ? 'default' : 'pointer',
+                      borderTop: activeKey === item.key ? '2px solid #0070f3' : 'none',
+                      position: 'relative',
                     }}
                   >
-                    <Pin className={`h-4 w-4 ${item.pinned ? 'text-blue-500' : ''}`} />
-                  </button> */}
-                </li>
-              </DraggableTabNode>
-            ))}
+                    <span
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {IconComponent && (
+                        <IconComponent
+                          color={activeKey === item.key ? '#343434' : '#7F858D'}
+                          className="h-4 w-4"
+                        />
+                      )}
+                      {item.label}
+                    </span>
+                    {/* Popup для кнопки закріплення */}
+                    {hoveredTab === item.key && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: '10px',
+                          marginTop: '1px',
+                          padding: '6px 16px',
+                          background: '#FEFEFE',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '4px',
+                          zIndex: 10,
+                        }}
+                      >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            togglePin(item.key);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          <Pin
+                            style={{
+                              height: '16px',
+                              width: '16px',
+                              color: item.pinned ? '#3b82f6' : '#6b7280',
+                            }}
+                          />
+                          <span style={{ fontSize: '14px', color: '#6b7280' }}>
+                            {item.pinned ? 'Tab pinnen' : 'Tab anpinnen'}
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                </DraggableTabNode>
+              );
+            })}
           </ul>
         </SortableContext>
         <DragOverlay>
@@ -239,7 +333,7 @@ export default function DraggableTabsNoAnt() {
               border: 'none',
             }}
           >
-            <ChevronDown color='#7F858D' className="h-5 w-5" />
+            <ChevronDown color="#7F858D" className="h-5 w-5" />
           </button>
           {dropdownOpen && (
             <ul
